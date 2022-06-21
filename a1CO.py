@@ -30,6 +30,6 @@ class reg:
         elif r == 6:
             self.r6 = val
             
-    
+    fjhfffs
             
             
