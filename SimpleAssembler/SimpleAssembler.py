@@ -102,9 +102,7 @@ def F(opcode):
 
 cmd = sys.stdin.read().split('\n')
 cmd = [x.split() for x in cmd if x != '\n' and x != '']
-if len(cmd) > 256:
-    print("Compilation Error: Memory Overflow!")
-    exit()
+
 ops_A = ['add', 'sub', 'mul', 'xor', 'or', 'and']
 ops_B = ['mov', 'ls', 'rs']
 ops_C = ['mov', 'div', 'not', 'cmp']
@@ -127,6 +125,19 @@ for w in range(len(cmd)):
         labels[i[0][:-1]] = w
         i.pop(0)
 
+while cmd != [] and cmd[0][0] == 'var':
+    variables[cmd[0][1]] = var_count
+    cmd.pop(0)
+    var_count += 1
+
+for i in variables.keys():
+    variables[i] += no_cmds-var_count
+
+
+if len(cmd) > 256:
+    print("Compilation Error: Memory Overflow!")
+    exit()
+
 if ['hlt'] not in cmd:
     e_count += 1
     print('Syntax Error: hlt instruction is not present in the file.')
@@ -139,13 +150,7 @@ if cmd.count(['hlt']) > 1:
     e_count += 1
     print('Syntax Error: There are more than 1 hlt instructions in the file.')
 
-while cmd != [] and cmd[0][0] == 'var':
-    variables[cmd[0][1]] = var_count
-    cmd.pop(0)
-    var_count += 1
 
-for i in variables.keys():
-    variables[i] += no_cmds-var_count
 
 for w in range(len(cmd)):
     i = cmd[w]
