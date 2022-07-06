@@ -264,3 +264,54 @@ for w in range(len(cmd)):
             continue
 
 
+p_counter = 0
+c_addr = len(cmd)-var_count
+
+while p_counter < len(cmd) and e_count == 0:
+    c = cmd[p_counter]
+    if ':' in c[0]:
+        labels[c[0][:-1]] = p_counter
+        c.pop(0)
+
+    if c[0] == 'var':
+        variables[c[1]] = c_addr
+        c_addr += 1
+        cmd.pop(p_counter)
+        p_counter -= 1
+
+    elif len(c) == 4:
+        A(c[0], c[1], c[2], c[3])
+
+    elif len(c) == 3 and '$' in c[2]:
+        if c[0] == 'mov':
+            B('movI', c[1], c[2][1:])
+        elif c[0] == 'ls':
+            B(c[0], c[1], c[2][1:])
+        elif c[0] == 'rs':
+            B(c[0], c[1], c[2][1:])
+
+    elif len(c) == 3:
+        if 'R' in c[2]:
+            if c[0] == 'mov':
+                C('movR', c[1], c[2])
+            elif c[0] == 'div':
+                C('divi', c[1], c[2])
+            elif c[0] == 'not':
+                C('not', c[1], c[2])
+            elif c[0] == 'cmp':
+                C('cmp', c[1], c[2])
+
+        elif c[2] == 'FLAGS':
+            C('movR', c[1], c[2])
+
+        else:
+            D(c[0], c[1], variables[c[2]])
+
+    elif len(c) == 2:
+        E(c[0], labels[c[1]])
+
+    elif c[0] == 'hlt':
+        F(c[0])
+
+    p_counter += 1
+
