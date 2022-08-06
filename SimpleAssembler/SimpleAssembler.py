@@ -1,48 +1,22 @@
 import sys
+import struct
 decode = {'R0': 0, 'R1': 1, 'R2': 2, 'R3': 3, 'R4': 4, 'R5': 5, 'R6': 6, 'FLAGS': 7}
 
 
 def getcode(o):
-    if o == 'add':
-        return '10000'
-    elif o == 'sub':
-        return '10001'
-    elif o == 'movI':
-        return '10010'
-    elif o == 'movR':
-        return '10011'
-    elif o == 'ld':
-        return '10100'
-    elif o == 'st':
-        return '10101'
-    elif o == 'mul':
-        return '10110'
-    elif o == 'divi':
-        return '10111'
-    elif o == 'rs':
-        return '11000'
-    elif o == 'ls':
-        return '11001'
-    elif o == 'xor':
-        return '11010'
-    elif o == 'or':
-        return '11011'
-    elif o == 'and':
-        return '11100'
-    elif o == 'not':
-        return '11101'
-    elif o == 'cmp':
-        return '11110'
-    elif o == 'jmp':
-        return '11111'
-    elif o == 'jlt':
-        return '01100'
-    elif o == 'jgt':
-        return '01101'
-    elif o == 'je':
-        return '01111'
-    elif o == 'hlt':
-        return '01010'
+    codes = {'add': '10000', 'sub': '10001', 'movI': '10010', 'movR': '10011', 'ld': '10100', 'st': '10101',
+             'mul': '10110', 'divi': '10111', 'rs': '11000', 'ls': '11001', 'xor': '11010', 'or': '11011',
+             'and': '11100', 'not': '11101', 'cmp': '11110', 'jmp': '11111', 'jlt': '01100', 'jgt': '01101',
+             'je': '01111', 'hlt': '01010', 'addf': '00000', 'subf': '00001', 'movf': '00010'}
+    return codes[o]
+
+
+def floatTobin(num):
+    bits, = struct.unpack('!I', struct.pack('!f', num))
+    bin_num = "{:032b}".format(bits)
+    exponent = format(int(bin_num[1:9], 2)-127, '03b')
+    mantissa = bin_num[9:]
+    return (exponent+mantissa)[:8]
 
 
 def A(opcode, reg1, reg2, reg3):
@@ -61,7 +35,11 @@ def A(opcode, reg1, reg2, reg3):
 def B(opcode, reg1, imm):
     a = list(getcode(opcode))
     x1 = list(str(f'{decode.get(reg1):03b}'))
-    imm = list(f'{int(imm):08b}')
+    # imm = int(imm)
+    if '.' not in imm:
+        imm = list(f'{int(imm):08b}')
+    else:
+        imm = list(floatTobin(float(imm)))
     a = a + x1
     a = a + imm
     print(''.join(a))
@@ -119,12 +97,6 @@ e_count = 0
 if not cmd:
     exit()
 
-for w in range(len(cmd)):
-    i = cmd[w]
-    if ':' in i[0]:
-        labels[i[0][:-1]] = w
-        i.pop(0)
-
 while cmd != [] and cmd[0][0] == 'var':
     variables[cmd[0][1]] = var_count
     cmd.pop(0)
@@ -133,6 +105,11 @@ while cmd != [] and cmd[0][0] == 'var':
 for i in variables.keys():
     variables[i] += no_cmds-var_count
 
+for w in range(len(cmd)):
+    i = cmd[w]
+    if ':' in i[0]:
+        labels[i[0][:-1]] = w
+        i.pop(0)
 
 if len(cmd) > 256:
     print("Compilation Error: Memory Overflow!")
@@ -149,8 +126,6 @@ if cmd[-1] != ['hlt'] and ['hlt'] in cmd:
 if cmd.count(['hlt']) > 1:
     e_count += 1
     print('Syntax Error: There are more than 1 hlt instructions in the file.')
-
-
 
 for w in range(len(cmd)):
     i = cmd[w]
@@ -188,11 +163,11 @@ for w in range(len(cmd)):
                 e_count += 1
                 print('Syntax Error: Invalid use of registers in line %d' % (w + var_count + 1))
                 continue
-            if '$' in i[2] and '.' in i[2]:
+            if '$' in i[2] and '.' in i[2] and (1 > float(i[2][1:]) or float(i[2][1:]) > 252):
                 e_count += 1
                 print('Syntax Error: Invalid literal value in line %d' % (w + var_count + 1))
                 continue
-            if '$' in i[2] and (0 > int(i[2][1:]) or int(i[2][1:]) > 255):
+            if '$' in i[2] and '.' not in i[2] and (0 > int(i[2][1:]) or int(i[2][1:]) > 255):
                 e_count += 1
                 print('Syntax Error: Invalid literal value in line %d' % (w + var_count + 1))
                 continue
@@ -227,11 +202,11 @@ for w in range(len(cmd)):
                     e_count += 1
                     print('Syntax Error: Invalid use of registers in line %d' % (w + var_count + 1))
                     continue
-                if '$' in i[2] and '.' in i[2]:
+                if '$' in i[2] and '.' in i[2] and (1 > float(i[2][1:]) or float(i[2][1:]) > 252):
                     e_count += 1
                     print('Syntax Error: Invalid literal value in line %d' % (w + var_count + 1))
                     continue
-                if '$' in i[2] and (0 > int(i[2][1:]) or int(i[2][1:]) > 255):
+                if '$' in i[2] and '.' not in i[2] and (0 > int(i[2][1:]) or int(i[2][1:]) > 255):
                     e_count += 1
                     print('Syntax Error: Invalid literal value in line %d' % (w + var_count + 1))
                     continue
@@ -319,4 +294,5 @@ while p_counter < len(cmd) and e_count == 0:
         F(c[0])
 
     p_counter += 1
+
 
